@@ -1,0 +1,4 @@
+#!/bin/bash
+WALLDIR=/usr/share/backgrounds
+
+wall=`ls -A $WALLDIR | dmenu -b -fn "Hack-10" -nb '#090909' -nf '#eeeeee' -sb '#2F5B91' -sf '#F9F9F9' -p 'set as allpaper: '` && eval "feh --bg-fill $WALLDIR/$wall"

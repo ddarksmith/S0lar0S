@@ -1,0 +1,91 @@
+# S0lar0S fluxbox menu --------------------------------------------------
+#------------------------------------------------------------ usual apps
+[begin] (< S0lar0S >)
+[exec] (Run command) {fbrun}
+[exec] (Terminal) {st}
+[exec] (PCManFM) {pcmanfm}
+[exec] (Navigateur) {surf https://www.google.ch}
+[separator]
+#----------------------------------------------------------------- menus
+[exec] (AppList) {thelauncher}
+#[submenu] (Debian menu) {}
+#    [include] (/etc/X11/fluxbox/fluxbox-menu)
+#[end]
+[separator]
+#------------------------------------------------------------------ apps
+[submenu] (Applications)
+    [exec] (Terminal) {st}
+    [exec] (PcmanFM) {pcmanfm}
+    [exec] (Ranger (cli\)) {st -e ranger}
+    [exec] (Web Browser) {surf https://www.google.ch}
+    [exec] (Anonymous Browser) {anonweb}
+    [exec] (FTP client) {filezilla}
+    [exec] (IRC client) {st -e weechat}
+    [exec] (Éditeur Vim) {st -e vim}
+    [exec] (Éditeur de texte) {geany}
+    [exec] (Recherche) {catfish}
+[end]
+#---------------------------------------------------------------- config
+[submenu] (Configuration)
+    [submenu] (Fluxbox) {}
+        [config] (config fluxbox)
+        [submenu] (Styles fluxbox) {}
+            [stylesdir] (/usr/share/fluxbox/styles)
+            [stylesdir] (~/.fluxbox/styles)
+        [end]
+        [submenu] (Éditer la conf Fluxbox)
+            [wallpapers] (~/.fluxbox) {st -e vim}
+        [end]
+        [reconfig] (Reconfigurer)
+        [restart] (Relancer)
+    [end]
+    [exec] (Interface) {lxappearance}
+    [submenu] (Wallpapers)
+        [exec] (Random wall) {fbsetbg -a -r /usr/share/backgrounds}
+        [submenu] (Wallpapers) {}
+            [wallpapers] (/usr/share/backgrounds) {fbsetbg -a}
+            [wallpapers] (~/.fluxbox/backgrounds) {fbsetbg -a}
+        [end]
+    [end]
+    [exec] (Display) {arandr}
+    [exec] (Invert colors) {xcalib -a -i}
+    [exec] (Keyboard) {keyboard_selector}
+    [submenu] (Conky) {}
+        [exec] (Edit conky) {st -e vim ~/.fluxbox/conkyrc_fluxbox}
+        [exec] (Start conky) {conky -c ~/.fluxbox/conkyrc_fluxbox}
+        [exec] (Stop conky) {killall conky}
+        [exec] (Man conky) {st -e man conky}
+    [end]
+    [submenu] (Eyecandy) {}
+        [exec] (3D light) {eyecandy -l}
+        [exec] (3D full) {eyecandy -f}
+        [exec] (3D off) {eyecandy -s}
+    [end]
+    [exec] (Sound) {st -e alsamixer}
+[end]
+#----------------------------------------------------------------- admin
+[submenu] (Administration)
+    [exec] (Root terminal) {gksu st}
+    [exec] (Default apps) {st -e sudo update-alternatives --all}
+    [exec] (Usage system) {st -e glances}
+    [exec] (Htop) {st -e htop}
+    [submenu] (Infos system)
+        [exec] (Screenfetch) {xterm -g 90x20 -e "screenfetch;$SHELL"}
+        [exec] (Inxi full) {xterm -g 100x28 -e "inxi -F;$SHELL"}
+    [end]
+    [exec] (Disk usage) {st -e ncdu /}
+    [exec] (Gparted) {gksu gparted}
+    [exec] (Disk utils) {gnome-disks}
+[end]
+#-------------------------------------------------------------- aide/doc
+[submenu] (Aide/Doc)
+    [exec] (Debian book) {debian-reference}
+    [exec] (Manuel fluxbox) {st -e man fluxbox}
+    [exec] (Wiki Fluxbox) {surf http://fluxbox.org/help/}
+    [exec] (les cahiers du débutant) {surf https://lescahiersdudebutant.fr}
+[end]
+[separator]
+#------------------------------------------------------------------ exit
+[exit] (Logout)
+[exec] (Exit) {quit}
+[end]

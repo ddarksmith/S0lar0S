@@ -1,0 +1,7 @@
+#!/bin/bash
+entry=`echo "... powered by searx" | dmenu -b -fn "Hack-10" -nb '#090909' -nf '#eeeeee' -sb '#2F5B91' -sf '#F9F9F9' -p "type a word then start searching..."`
+if test "X$entry" != "X"; then
+		surf https://searx.laquadrature.net/?q="$entry" &
+fi
+
+exit 0

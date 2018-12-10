@@ -1,0 +1,37 @@
+#!/bin/bash
+ # configuraiton de l'architecture i386
+if [!$(dpkg --print-foreign-architectures)];then
+ echo "multiarch enabled"
+else
+ dpkg --add-architecture i386
+ apt-get -y update
+fi
+
+ # installaiton de gdebi
+ apt-get -y install gdebi
+
+ 
+# téléchargement
+ wget --user-agent=Firefox -O /tmp/libssl_i386.deb -q http://ftp.at.debian.org/debian/pool/main/o/openssl/libssl1.0.0_1.0.1t-1+deb8u5_i386.deb \
+ | zenity --progress --pulsate --text "Téléchargement de Skype" --auto-close
+
+ wget --user-agent=Firefox -O /tmp/skype_i386.deb -q http://www.skype.com/go/getskype-linux-deb \
+ | zenity --progress --pulsate --text "Téléchargement de Skype" --auto-close
+
+
+ # vérification de la présence du .deb
+ if [ -e /tmp/skype_i386.deb && -e /tmp/libssl_i386.deb]; then
+   # installation
+   gdebi libssl_i386.deb \
+    | zenity --progress --pulsate --text "Installation de libssl\nIl sera lancé juste après." --auto-close
+
+   gdebi /tmp/skype_i386.deb \
+    | zenity --progress --pulsate --text "Installation de Skype\nIl sera lancé juste après." --auto-close
+   # lancement de Skype
+    /opt/skype/skype --detach &
+    exit 0
+  else
+   # erreur si le deb n'est pas là
+   zenity --error --text="Erreur!\nLe fichier d'installation n'a pas pu être trouvée"
+   exit 1
+ fi

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+echo "INFO: prise en compte des proposed-update pour un build le plus à jour possible -"
+echo "deb http://deb.debian.org/debian/ stretch-proposed-updates main" > /etc/apt/sources.list.d/proposed.list
+apt update
+apt dist-upgrade -y -qq
+rm /etc/apt/sources.list.d/proposed.list

@@ -1,0 +1,31 @@
+#!/bin/sh
+# build script - S0lar0S
+#######################
+lb config noauto \
+    --mode "debian" \
+    --system "live" \
+    --distribution "stretch" \
+    --archive-areas "main contrib non-free" \
+    --security "true" \
+    --updates "true" \
+    --backports "false" \
+    --binary-filesystem "fat32" \
+    --binary-images "iso-hybrid" \
+    --apt-indices "true" \
+    --apt-recommends "false" \
+    --apt-secure "true" \
+    --apt-source-archives "false" \
+    --linux-package "linux-image" \
+    --bootloader "syslinux" \
+    --debian-installer "live" \
+    --debian-installer-gui "false" \
+    --debian-installer-distribution "daily" \
+    --iso-application "S0lar0S-18" \
+    --iso-volume "S0lar0S-18" \
+    --memtest "none" \
+    --win32-loader "false" \
+    --clean \
+    --debug \
+    --verbose \
+    --source "false" \
+	"${@}"

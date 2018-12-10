@@ -1,0 +1,76 @@
+## S0lar0S default packages
+
+##basics
+adduser gnupg user-setup eject desktop-base locales
+accountsservice pciutils gksu sudo file colord
+console-data console-setup console-setup-linux console-common
+keyboard-configuration iptables iproute net-tools
+
+##xserver - window manager
+xorg lightdm fluxbox fbautostart pekwm awesome
+
+##editor
+vim mupdf geany
+
+##filer & dep
+mediainfo caca-utils atool highlight w3m-img exiftool pcmanfm mc
+
+##panel
+trayer
+
+##monitor
+htop ncdu conky-all glances inxi screenfetch
+
+##network
+filezilla lftp wget weechat weechat-scripts  wpasupplicant
+wireless-tools openssl ca-certificates
+firmware-iwlwifi network-manager-gnome network-manager-openvpn-gnome network-manager-pptp-gnome network-manager-vpnc
+#wicd-gtk 
+
+##graphics
+feh scrot
+
+##tools
+x11-apps x11-utils xcalib zenity
+xdotool ccze catfish mlocate dlocate
+most curl bc eject xdg-utils xdg-user-dirs
+libnotify-bin notification-daemon usbutils
+bash-completion
+python3-tk python3-pil python3-pil.imagetk
+
+##fonts
+xfonts-terminus fonts-droid-fallback fonts-freefont-ttf fonts-liberation
+xfonts-100dpi xfonts-75dpi xfonts-base xfonts-utils ttf-freefont fonts-hack-ttf
+
+##theme
+lxappearance arandr compton gtk2-engines-pixbuf
+gnome-themes-standard murrine-themes arc-theme
+
+##media
+alsa-utils alsa-tools mpv volumeicon-alsa moc moc-ffmpeg-plugin
+pulseaudio pavucontrol
+
+##codecs
+gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
+gstreamer1.0-plugins-ugly gstreamer1.0-x gstreamer1.0-tools 
+
+##archive
+unrar-free dtrx unzip p7zip-full lzma zip file-roller
+
+##power
+upower acpi
+
+##filesystem
+gparted gpart dosfstools ntfs-config e2fsprogs ntfs-3g mtools gvfs gvfs-bin gvfs-fuse gvfs-backends
+gnome-disk-utility gdisk autofs
+
+##admin
+firmware-linux-free lsb-release
+gnome-keyring libpam-gnome-keyring policykit-1 policykit-1-gnome
+dbus dbus-x11 consolekit pam-dbus-notify libpam-ck-connector
+
+##free
+#vrms debian-reference-en debian-reference-fr
+
+##aphelion
+keepass2 git default-jre icedtea-8-plugin firefox-esr firefox-esr-l10n-fr parcellite

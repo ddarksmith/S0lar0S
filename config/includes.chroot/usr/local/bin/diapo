@@ -1,0 +1,18 @@
+#!/bin/bash
+# diaporama fullscreen avec feh
+# usage : $ diapo /path_to_image
+
+if [ -z "$1" ]; then
+    IMAGE=$(zenity --file-selection --title 'diapo of what ?')
+else
+    IMAGE="$@"
+fi
+
+exec feh --quiet \
+    --fullscreen \
+    --image-bg black \
+    --slideshow-delay 4 \
+    --hide-pointer \
+    --title "$(dirname $IMAGE)" \
+    --start-at "$IMAGE" "$(dirname $IMAGE)" &
+exit 0

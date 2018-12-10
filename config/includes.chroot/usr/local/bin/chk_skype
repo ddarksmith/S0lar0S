@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# si skype est installé, on le lance
+if [ -e /opt/skype ]; then
+    /opt/skype/skype &
+    exit 0
+else
+    # si il n'est pas installé, on pose la question
+    if
+        zenity --question \
+            --text="Skype n'est pas encore installé sur votre système\nVoulez-vous récupérer la dernière version ?" \
+            --ok-label="Récupérer & lancer" --cancel-label="nop'"
+    then
+	gksu /usr/local/bin/install_skype.sh
+    fi
+fi

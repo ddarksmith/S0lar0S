@@ -1,0 +1,29 @@
+#!/bin/bash
+
+ACTION=`zenity --width=90 --height=205 --list \
+    --text="Select an action" \
+    --title="Logout" \
+    --column "Action" \
+    "Shutdown" "Reboot" "Suspend" "Hibernate" "Logout"`
+
+if [ -n "${ACTION}" ]; then
+    case $ACTION in
+    Shutdown)
+        systemctl poweroff
+        ;;
+    Reboot)
+        systemctl reboot
+        ;;
+    Suspend)
+        systemctl suspend
+        ;;
+    Hibernate)
+        systemctl hibernate
+        ;;
+    Logout)
+        xdotool key Ctrl+Alt+BackSpace
+        ;;
+    esac
+fi
+
+exit 0

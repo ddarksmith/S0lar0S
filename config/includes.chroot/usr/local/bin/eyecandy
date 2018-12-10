@@ -1,0 +1,47 @@
+#!/bin/bash
+# composite level selector
+# arpinux 2016 <http://arpinux.org>
+
+# with args > just exec
+if [ "$1" == "-s" ]; then
+    pkill -9 compton
+    exit 0
+elif [ "$1" == "-l" ]; then
+    pkill -9 compton
+    sleep 1s
+    compton -cC &
+    exit 0
+elif [ "$1" == "-f" ]; then
+    pkill -9 compton
+    sleep 1s
+    compton -cF -t-7 -l-7 -r7 -o.95 &
+    exit 0
+else
+    # no args or wrong args > show zenity
+    ACTION=$(zenity --width=90 --height=155 --list \
+        --text="Select a composite mode" \
+        --title="eyecandy" \
+        --column "composite level" \
+        "stop" "light" "full")
+    if [ -n "${ACTION}" ]; then
+        case $ACTION in
+            light)
+                pkill -9 compton
+                sleep 1s
+                compton -cC &
+                exit 0
+                ;;
+            full)
+                pkill -9 compton
+                sleep 1s
+                compton -cF -t-7 -l-7 -r7 -o.95 &
+                exit 0
+                ;;
+            stop)
+                pkill -9 compton
+                exit 0
+                ;;
+        esac
+    fi
+fi
+exit 0

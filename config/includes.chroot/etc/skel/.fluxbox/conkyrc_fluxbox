@@ -1,0 +1,87 @@
+--[[
+	fluxbox conkyrc 3hg @ 2017 © WTFPL
+]]
+
+conky.config = {
+	background = true,
+	use_xft = true,
+	font = 'Hack:pixelsize=12',
+	xftalpha = 1,
+	update_interval = 1.0,
+	total_run_times = 0,
+	own_window = true,
+	own_window_transparent = false,
+	own_window_colour = '222222',
+	own_window_type = 'override',
+	own_window_title = 'Conky_Flux',
+	double_buffer = true,
+	maximum_width = 150,
+	minimum_width = 150,
+	draw_shades = false,
+	draw_outline = false,
+	draw_borders = true,
+	border_inner_margin = 5,
+	border_width = 1,
+	draw_graph_borders = false,
+	default_color = 'CCCCCC',
+	color1 = 'DBDBDB',
+	color2 = 'ABABAB',
+	color3 = '7D7D7D',
+	default_shade_color = 'black',
+	default_outline_color = 'white',
+	alignment = 'tr',
+	gap_x = 15,
+	gap_y = 15,
+	no_buffers = true,
+	uppercase = false,
+	text_buffer_size = 1024,
+	top_name_width = 10,
+	imlib_cache_size = 0,
+	cpu_avg_samples = 2,
+	show_graph_scale = false,
+	show_graph_range = false,
+	short_units = true,
+	override_utf8_locale = true,
+	use_spacer = 'none',
+	if_up_strictness = 'address'
+}
+
+conky.text = [[
+${voffset 5}${alignc}*^- S0lar0S -^*
+${alignc}on ${nodename}
+${hr 1}
+${voffset 5}${time %a} ${time %d/%m}\
+${alignr}${time %I:%M}
+${hr 1}
+${voffset 5}CPU ${cpu}%\
+${alignr}${cpugraph 10,75 222222 C40000 -t}${color}
+${alignc}${loadavg 1}${color3} ${loadavg 2} ${color}${loadavg 3}
+ name${alignr}%cpu
+${color1}${top name 1}${alignr}${top cpu 1}%${color}
+${color2}${top name 2}${alignr}${top cpu 2}%${color}
+${color3}${top name 3}${alignr}${top cpu 3}%${color}
+${hr 1}
+${voffset 5}RAM ${memperc}%\
+${alignr}SWAP ${swapperc}%
+${voffset 5}used${color1} ${mem} ${color}max${color1} ${memmax}${color}
+ name${alignr}%ram
+${color1}${top_mem name 1}${alignr}${top_mem mem 1}%${color}
+${color2}${top_mem name 2}${alignr}${top_mem mem 2}%${color}
+${color3}${top_mem name 3}${alignr}${top_mem mem 3}%${color}
+${hr 1}
+${voffset 5}SYS ${color1}${fs_used_perc /}${color}%\
+${alignr}HOME ${color1}${fs_used_perc /home}${color}%
+I/O${color1}${diskio}${color}\
+${alignr}${diskiograph 10,80 222222 7D7D7D}
+${hr 1}
+Alt+m $alignr fluxmenu
+Alt+d $alignr dmenu
+Alt+p $alignr fbrun
+Alt+t $alignr terminal
+Alt+r $alignr ranger
+Super+r $alignr pcmanfm
+Alt+w $alignr browser
+Super+w $alignr torbrowser
+Alt+e $alignr vim
+Alt+v $alignr volume
+]]

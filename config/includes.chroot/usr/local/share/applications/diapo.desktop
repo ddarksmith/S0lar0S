@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Diapo
+Comment=launch a diaporama
+Exec=/usr/local/bin/diapo
+Terminal=false
+Type=Application
+Icon=/usr/share/tkmenu/icons/viewpics.png
+Categories=GTK;Graphics;Viewer;

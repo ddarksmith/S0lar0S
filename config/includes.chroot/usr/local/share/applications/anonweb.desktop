@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Tor Browser
+Comment=Launch the Tor Browser Bundle
+Exec=/usr/local/bin/anonweb
+Terminal=false
+Type=Application
+Icon=/usr/share/tkmenu/icons/tor.png
+Categories=Network;WebBrowser;

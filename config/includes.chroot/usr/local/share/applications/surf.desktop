@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Surf Browser
+Comment=Launch Surf
+Exec=surf
+Terminal=false
+Type=Application
+Icon=/usr/share/tkmenu/icons/web.png
+Categories=Network;WebBrowser;

@@ -1,0 +1,461 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><head>
+<meta content="text/html; charset=utf-8" http-equiv="content-type"><title>The Launcher</title>
+
+<style type="text/css">
+body {
+margin: 0px;
+font-family: Arial,Helvetica,sans-serif;
+background-color: #ffffff;
+color: #444d65;
+}
+p {
+margin-bottom: 6pt;
+margin-top: 12pt;
+}
+a:link {
+text-decoration: none;
+color: #000000;
+}
+a:visited {
+text-decoration: none;
+color: #000000;
+}
+a:hover {
+text-decoration: none;
+color: #000000;
+background-color: #b0c0dc;
+}
+h1 {
+font-weight: bold;
+font-size: xx-large;
+color: white;
+}
+td.h1 {
+background-color: #677ca0;
+}
+td.empty {
+width: 15%;
+}
+td.stripe {
+border-top-style: ridge;
+border-bottom-style: groove;
+border-top-width: 2px;
+border-bottom-width: 2px;
+background-color: #4b5a75;
+padding-top: 2pt;
+padding-bottom: 1pt;
+}
+.menu {
+padding-right: 5pt;
+padding-left: 5pt;
+font-weight: bold;
+}
+a.menu:link {
+text-decoration: none;
+color: white;
+}
+a.menu:visited {
+text-decoration: none;
+color: white;
+}
+a.menu:hover {
+text-decoration: none;
+color: #444d65;
+background-color: white;
+}
+h2 {
+font-size: large;
+font-weight: bold;
+margin-top: 24pt;
+margin-bottom: 12pt;
+}
+ul {
+margin-top: 0;
+margin-bottom: 0;
+}
+li {
+padding-bottom: 6pt;
+}
+hr {
+margin-top: 30pt;
+}
+.screenshot {
+font-size: smaller;
+vertical-align: top;
+}
+img.shot {
+border: 1px solid;
+}
+a.shot:link {
+text-decoration: none;
+color: #444d65;
+}
+a.shot:visited {
+text-decoration: none;
+color: #444d65;
+}
+a.shot:hover {
+text-decoration: none;
+color: #b0c0dc;
+background-color: #ffffff;
+}
+table.copyright {
+font-size: x-small;
+color: #ffffff;
+padding-top: 120pt;
+}
+</style>
+<script language="JavaScript">
+function show(idshow, idhide) {
+document.getElementById(idshow).style.display = "block";
+document.getElementById(idhide).style.display = "none";
+}
+</script>
+</head>
+<body>
+<table style="text-align: center; width: 100%;" border="0" cellpadding="0" cellspacing="0">
+<tbody>
+<tr>
+<td class="h1">
+<h1>The&nbsp;Launcher</h1>
+</td>
+</tr>
+<tr>
+<td class="stripe"><a href="index.html#About" class="menu">About</a>|<a href="#News" class="menu">News</a>|<a href="#Usage" class="menu">Usage</a>|<a href="#To_Do" class="menu">To&nbsp;Do</a>|<a href="#Contacts" class="menu">Contacts</a>
+</td>
+</tr>
+</tbody>
+</table>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2" cellspacing="2">
+<tbody>
+<tr>
+<td class="empty"></td>
+<td>
+<h2><a name="About"></a>About</h2>
+<p>The&nbsp;Launcher is an innovative GNOME
+panel applet and standalone application
+launcher automatically adapting to your habits. The
+ultimate goal is to make it possible to run any application with as few
+clicks as possible. This means
+tracking your favorite applications, and not
+forcing you to mark or organize them by hand. Our preferences
+change with the
+time passing, and The&nbsp;Launcher responds to that automatically.</p>
+<p>In terms of user interface, The&nbsp;Launcher
+delivers simple, clean and usable interface with advanced
+features like 'search as you type' and 'smart search', and requires
+zero
+configuration effort. The&nbsp;Launcher should be
+especially handy on
+touchscreens and in keyboard-only scenarios.</p>
+<table style="text-align: left; width: 100%; display: none;" border="0" cellpadding="0" cellspacing="0">
+<tbody>
+<tr>
+<td>
+<h2>Screenshots</h2>
+<p>Here are some screenshots to give you better
+understanding of what The&nbsp;Launcher is about:</p>
+<table style="text-align: center; width: 100%;" border="0" cellpadding="o" cellspacing="0">
+<tbody>
+<tr>
+<td style="width: 25%;"><a class="shot" href="full1.png"><img class="shot" alt="Screenshot 1" src="small1.png"></a></td>
+<td style="width: 25%;"><a class="shot" href="full2.png"><img class="shot" alt="Screenshot 2" src="small2.png"></a>
+</td>
+</tr>
+<tr class="screenshot">
+<td>The Launcher started in standalone mode
+with tray icon in the top left corner.</td>
+<td>The Launcher started from GNOME panel
+applet.</td>
+</tr>
+<tr>
+<td style="width: 25%;"><br>
+<a class="shot" href="full3.png"><img class="shot" alt="Screenshot 3" src="small3.png"></a></td>
+<td style="width: 25%;"><br>
+<a class="shot" href="full4.png"><img class="shot" alt="Screenshot 4" src="small4.png"></a></td>
+</tr>
+<tr class="screenshot">
+<td>Smart search: we are searching for 'ooo'
+and
+finding OpenOffice.org. The Launcher runs in fullscreen mode.</td>
+<td>Some applications were installed recently.</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="News"></a>News</h2>
+<ul>
+<li>April 13, 2008: Version 2.4.1.</li>
+<ul>
+<li>Usable application
+categories support. The list of application categories is available in
+the header of 'Sections' group and shows installed
+freedesktop.org applications categories.</li>
+<li>Search
+interface update to make it less intrusive. Search panel is now hidden
+on startup and appears when you press&nbsp;Control-F or start
+typing.
+Search panel can be closed by close button, pressing&nbsp;Control-F
+or
+Escape.</li>
+<li>Improved 'Frequently used' applications sort
+algorithm. Half-life method is now used instead of counting application
+runs.</li>
+<li>Application list is now loaded from subfolders.
+Added to support applications installed in wine and KDE
+applications.&nbsp;</li>
+<li>The Launcher is no longer shown in taskbar and
+pager when launched from GNOME panel.</li>
+<li>New
+configuration file option, 'Mode'. Can be 'fullscreen' (fullscreen
+window), 'menu'
+(menu-like window), and 'standard' (normal window, default behavior).</li>
+<li>All
+configuration file options can be specified in command line using
+'--option[=value]' notation. If value is not provided, '1' will be used.</li>
+<li>Further startup speed improvements.</li>
+</ul>
+<li>March 2, 2008: Version 2.4.</li>
+<ul>
+<li>Simplified interface: single tab-less view
+retaining all the functionality of 2.3 version.</li>
+<li>Tray icon launcher.</li>
+<li>Significant&nbsp;startup time decrease.</li>
+<li>'--debug' option to run applet in separate window.</li>
+</ul>
+<li id="news_show"><a onclick="show('news_hidden', 'news_show');" style="color: black; cursor: pointer;">Older
+news...</a></li>
+</ul>
+<table id="news_hidden" style="text-align: left; width: 100%; display: none;" border="0" cellpadding="0" cellspacing="0">
+<tbody>
+<tr>
+<td>
+<ul>
+<li>January 26, 2008: Version 2.3.1.</li>
+<ul>
+<li>GNOME panel applet installation fixes.</li>
+<li>SUSE Linux support.</li>
+</ul>
+<li>January 09, 2008: Version 2.3.</li>
+<ul>
+<li>First GNOME panel applet release.</li>
+<li>GNOME panel applet installer: run
+'install-applet'
+from 'gnome-applet' folder.</li>
+<li>New options: 'Icon' and 'Label' in '[Panel]'
+section to
+set applet icon and text.</li>
+<li>Local GNOME menu support.</li>
+<li>Smart search (e.g. 'ooo' will find
+'OpenOffice.org').</li>
+<li>Significant performance improvements.</li>
+<li>Small interface improvements.</li>
+<li>Several bugs fixed in hotkeys processing.</li>
+</ul>
+<li>December 15, 2007: Version 2.2.</li>
+<ul>
+<li>Interface and key bindings revamp allowing to
+switch
+views in one click or key press. Views are now switched with
+F1-F3.</li>
+<li>Better default window, column and icon size.</li>
+<li>Support for GTK icon themes, that have
+preference
+over application-supplied icons.</li>
+<li>Running applications are denoted with small
+emblem
+in the bottom-right of their icon.</li>
+<li>Support for local icons placed in
+'~/.thelaucher/icons'. Use --debug switch to find
+requested icon name.</li>
+<li>'~/.thelaucher/gtk-ui' renamed to
+'~/.thelaucher/config', '~/.thelaucher/local' renamed to
+'~/.thelaucher/apps'.</li>
+</ul>
+<li>December 2, 2007: Version 2.1.1. Bugfix release.</li>
+<ul>
+<li>Better non-fullscreen window handling.</li>
+<li>Non-fullscreen mode is now the default.</li>
+<li>Some pango markup fixes.</li>
+<li>Debug mode: use '--debug' to get
+'~/.thelaucher/dump' file containing debug information.</li>
+</ul>
+<li>October 30, 2007: Version 2.1.
+First public release.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="Download"></a>Download</h2>
+<p>The&nbsp;Launcher version 2.4.1: <a href="thelauncher-2.4.1.tar.gz">thelauncher-2.4.1.tar.gz</a>
+(33Kb)</p>
+<p>The&nbsp;Launcher is written in <a href="http://www.python.org/">Python</a>.
+The only
+frontend supplied currently uses <a href="http://www.gtk.org/">GTK+</a>.
+Installing
+<a href="http://www.pygtk.org/">pygtk</a>
+should be sufficient on most distributions for The&nbsp;Launcher to
+run.</p>
+<h2>Installation</h2>
+<p>To install GNOME panel applet, unpack downloaded archive
+to any location and run&nbsp;'install-applet'
+from 'gnome-applet' folder.</p>
+<p>To run The&nbsp;Launcher in standalone mode no
+installation is required. Inside the
+archive you will find 'thelauncher' executable that
+can be run from any
+location.</p>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="Usage"></a>Usage</h2>
+<p>The easiest way to use The Launcher on touchscreen or
+with mouse is to install it as&nbsp;GNOME panel applet or to add it
+to the
+panel as an application launcher.</p>
+<p>Alternatively, you may use tray icon to
+invoke&nbsp;The
+Launcher. To do that, run 'thelauncher-trayicon' from 'tray-icon'
+folder. </p>
+<p>The best way to use The Launcher from keyboard is to
+assign it to a hotkey. <a href="http://gentoo-wiki.com/HOWTO_Use_Multimedia_Keys">Here</a>
+you can find a good tutorial describing how to do that under different
+window managers and desktop environments. Alternatively, you
+may
+use programs like <a href="http://hocwp.free.fr/xbindkeys/xbindkeys.html">XBindKeys</a>,
+<a href="http://users.softlab.ece.ntua.gr/%7Ethkala/projects/actkbd/actkbd.html">actkbd</a>
+or <a href="http://keytouch.sourceforge.net/">KeyTouch</a>.</p>
+<h2>Applications groups</h2>
+<p>The&nbsp;Launcher automatically arranges
+applications into three groups. You can quickly scroll to one of these
+groups using F1-F3 keys.</p>
+<ul>
+<li><b>Recently installed</b> group appears
+when you installed some
+applications recently. Applications will disappear from this group
+after you launch them or after some time of not paying any attention to
+them.</li>
+<li><b>Frequently used</b> group
+shows&nbsp;applications you launched recently. Most frequently used
+applications are displayed first. This group is&nbsp;intended to be
+the most
+useful view in&nbsp;The&nbsp;Launcher - it adapts to your
+habbits as you favorite applications pop up automatically..</li>
+<li><b>Sections</b> group
+shows all applications or one of <a href="http://standards.freedesktop.org/menu-spec/latest/apa.html">freedesktop.org
+applications categories</a>.</li>
+</ul>
+<p id="usage_show"><a onclick="show('usage_hidden', 'usage_show');" style="color: black; cursor: pointer; display: none;">Advanced
+usage...</a></p>
+<table id="usage_hidden" style="text-align: left; width: 100%; display: block;" border="0" cellpadding="0" cellspacing="0">
+<tbody>
+<tr>
+<td>
+<h2>Hotkeys</h2>
+<p>The&nbsp;Launcher is fully usable without a
+mouse, thanks to a number of hotkeys:</p>
+<ul>
+<li><b>F1-F3</b> scrolls to 'Recently
+installed', 'Frequently used' and 'Sections' respectively.</li>
+<li><b>Any alphanumeric key</b>
+or <b>Control-F</b> starts smart search.&nbsp;Smart means typing 'ooo'
+will find all OpenOffice.org applications for you.</li>
+<li><b>Enter</b> finishes search.</li>
+<li><b>Alt-C</b>
+clears the search field.</li>
+<li><b>Escape</b>
+closes&nbsp;The&nbsp;Launcher.</li>
+</ul>
+<h2>Configuration</h2>
+<p>The&nbsp;Launcher should be completely usable
+without any
+configuration. However, some settings can be tweaked from
+configuration
+file. This file, '~/.thelauncher/config', has
+the following options:</p>
+<ul>
+<li>[UI] section has the following
+keys:</li>
+<ul>
+<li>Mode: Sets window mode. Can be 'fullscreen' (fullscreen
+window), 'menu'
+(menu-like window), and 'standard' (normal window, default behavior).</li>
+<li>IconSize: Size of application
+icons. Default is '-1',
+which uses reasonable default based on GTK+ theme font size.</li>
+<li>Columns: The number of columns
+to
+show. The value of
+'-1' uses default based on GTK+ theme font size.</li>
+</ul>
+<li>[Panel] section has the following
+keys:</li>
+<ul>
+<li>Icon: Path to image that will be used as
+applet
+icon.</li>
+<li>Label: Text that will be used as applet label.</li>
+</ul>
+</ul>
+<p>All
+configuration file options can be specified in command line using
+'--option[=value]' notation. If value is not provided, '1' will be used.</p><p>You can install custom applications shortcuts in
+'~/.thelauncher/local'. Any application in this folder will
+override system-wide application with the same name. Alternatively, you
+can use Alacarte (Gnome menu editor) to create and edit your
+personal application launchers, and The Launcher will find them
+automatically.</p>
+<p>Local
+icons can be placed in '~/.thelaucher/icons'. You can use
+--debug switch&nbsp;that produces '~/.thelauncher/dump' file to
+find icon name for any installed application.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="To_Do"></a>To Do</h2>
+<p>While The&nbsp;Launcher is usable in its current
+state, the project is under development to ensure better integration
+with modern desktops. The key items on the agenda include:</p>
+<ul>
+<li>GNOME panel applet performance improvement</li>
+<li>Further interface improvements</li>
+<li>Packages for major distributions</li>
+<li>Internationalization and localization&nbsp;</li>
+</ul>
+<p>One of the biggest problems with existing
+The&nbsp;Launcher design is <a href="http://en.wikipedia.org/wiki/Spatial_memory">spatial
+memory</a>. The way The Launcher operates contradicts
+to the
+spatial memory concept: we prefer our frequently used applications to
+stay in the same place, and this is not always true in The Launcher.
+&nbsp;I am investigating different solutions, pinning the
+applications may be one of them.</p>
+<p>Any help on one of these items (as well as any others,
+including testing and documentation writing)
+is most welcome. Please see project contact details below.</p>
+<hr style="width: 100%; height: 2px;">
+<h2><a name="Contacts"></a>Contacts</h2>
+To report bugs, submit patches, or just to share your ideas and
+impressions, do not hesitate to contact me at
+&lt;thelauncher-at-mail-dot-ru&gt;
+</td>
+<td class="empty"></td>
+</tr>
+</tbody>
+</table>
+<table class="copyright" style="text-align: center; width: 100%;" border="0" cellpadding="0" cellspacing="0">
+<tbody>
+<tr>
+<td class="stripe">Copyright&nbsp;2007-2008
+Alexander&nbsp;Barinov. All&nbsp;Rights&nbsp;Reserved.</td>
+</tr>
+</tbody>
+</table>
+</body></html>

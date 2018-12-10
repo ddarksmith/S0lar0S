@@ -1,0 +1,11 @@
+#!/bin/bash
+# simple command-line to clear thumbnails folder
+SPACE=`du -kh --max-depth=0 ~/.thumbnails | awk '{print $1}'`
+ACTION=`zenity --question --title "clear thumbnails" --text " clear thumbnails ?\n $SPACE to delete."; ans=$? ; echo "$ans"`
+if [ "${ACTION}" == "0" ]; then
+    rm -Rf ~/.thumbnails/*
+    zenity --info --text "thumbnails cleared" --timeout 3
+else
+    zenity --info --text "cancelled"
+fi
+exit 0

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# si torbrowser est installé, on le lance
+if [ -e ~/Tor/tor-browser_fr/Browser/start-tor-browser ]; then
+    ~/Tor/tor-browser_fr/Browser/start-tor-browser --detach &
+    exit 0
+else
+    # si il n'est pas installé, on pose la question
+    if
+        zenity --question \
+            --text="Le navigateur TorBrowser n'est pas encore installé sur votre système\nVoulez-vous récupérer la dernière version ?" \
+            --ok-label="Récupérer & lancer" --cancel-label="nop'"
+    then
+        # création si nécessaire du dossier Tor
+        mkdir -p ~/Tor && cd ~/Tor
+        # nettoyage pour éviter le wger *-1
+        if [ -e ~/Tor/torbrowser.tar.xz ]; then rm torbrowser.tar.xz; fi
+        # téléchargement sur le serveur kissballad
+        wget --user-agent=Firefox -O torbrowser.tar.xz \
+            https://kissballad.arpinux.org/tools/tor-browser-linux$(getconf LONG_BIT)-fr.tar.xz \
+            | zenity --progress --pulsate --text "Téléchargement du navigateur TorBrowser" --auto-close
+        # vérification de la présence de l'archive
+        if [ -e ~/Tor/torbrowser.tar.xz ]; then
+            # décompression de l'archive
+            tar -xvJf torbrowser.tar.xz \
+                | zenity --progress --pulsate --text "Décompression du navigateur Tor\nIl sera lancé juste après." --auto-close
+            # lancement du torbrowser
+            ~/Tor/tor-browser_fr/Browser/start-tor-browser --detach &
+            exit 0
+        else
+        # erreur si l'archive n'est pas là
+            zenity --error --text="Erreur!\nL'archive du navigateur n'a pas pu être trouvée"
+            exit 1
+        fi
+    fi
+fi

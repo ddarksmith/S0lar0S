@@ -1,0 +1,13 @@
+#!/bin/bash
+#  - set sources.list
+#  - set nice S0lar0S grub theme
+#############################################################
+
+# set default sources.list
+mv -f /usr/local/share/S0lar0S/sources.list /etc/apt/sources.list
+
+# ajouter un background à GRUB
+echo "GRUB_BACKGROUND=\"/usr/share/images/grub/S0lar0S.tga\"" >> /etc/default/grub
+update-grub
+
+exit 0

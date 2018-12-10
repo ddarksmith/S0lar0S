@@ -1,0 +1,36 @@
+#!/bin/sh
+# PekWM start file
+# This file is a simple shell script; It gets run on pekwm startup, after 
+# the theme and all config has loaded if it is set executable
+# (chmod +x start).
+#
+# This is different from ~/.xinitrc because a normal configuration of 
+# .xinitrc you'll run all commands, then launch the window manager last.
+#
+# It also gets re-run every time pekwm is restarted.
+# 
+# As for it's usefulness, well, it's up to you. I actually set my background
+# from my start file; since it runs after the theme gets loaded, this 
+# effectively overrides whatever's in the theme.
+# 
+# There's probably a few other good uses for it, too. I mainly pushed for it
+# because when I was doing fluxbox's docs, people used to complain that there
+# wasn't one, and I wanted to avoid that for pekwm. ;) --eyez
+
+## autostart apps & services ##-----------------------------------------
+which fbautostart > /dev/null
+if [ $? -eq 0 ]; then
+    fbautostart
+fi
+## wall ##--------------------------------------------------------------
+if [ -e ~/.fehbg ]; then
+    sh ~/.fehbg &
+else
+    feh --bg-fill /usr/share/backgrounds/Wall.png &
+fi
+## systray ##-----------------------------------------------------------
+trayer --edge bottom --align right --margin 0 --widthtype request --heighttype pixel --height 18px --transparent true --tint 0x090909 --expand true --padding 3px &
+## applets ##-----------------------------------------------------------
+sleep 5s && volumeicon &
+## monitor ##-----------------------------------------------------------
+sleep 3s && conky -c ~/.pekwm/conkyrc_pekwm &

@@ -1,0 +1,161 @@
+# Menu config for pekwm
+
+  # Variables
+  INCLUDE = "vars"
+
+  RootMenu = "Pekwm" {
+
+    Entry = "" { Actions = "Dynamic /usr/local/bin/pekmenu-time.sh"}
+    Entry = "Exécuter" { Actions = "ShowCmdDialog" }
+    Entry = "Terminal" { Actions = "Exec $TERM &" }
+    Entry = "Fichiers" { Actions = "Exec $FILER &" }
+    Entry = "Browser" { Actions = "Exec $BROWSER https://www.google.ch &" }
+    Entry = "AnonWeb" { Actions = "Exec anonweb &" }
+
+    Separator {}
+    
+    Entry = "AppList" { Actions = "Exec thelauncher &" }
+    
+    Separator {}
+
+    Submenu = "Home" {
+        Entry { Actions = "Dynamic ~/.pekwm/scripts/pekdir.sh" }
+    }
+    Submenu = "Apps" {
+        Entry = "CLI Filer" { Actions = "Exec $TERM -e ranger &" }
+        Entry = "FTP client" { Actions = "Exec filezilla &" }
+        Entry = "IRC client" { Actions = "Exec $TERM -e weechat &" }
+        Entry = "éditeur vim" { Actions = "Exec $TERM -e $EDITOR &" }
+        Entry = "éditeur geany" { Actions = "Exec geany &" }
+        Entry = "rechercher" { Actions = "Exec catfish &" }
+        Entry = "utilisation disque" { Actions = "Exec $TERM -e ncdu &" }
+        Entry = "controle du volume" { Actions = "Exec $TERM -e alsamixer &" }
+        Submenu = "capture" {
+            Entry = "maintenant" { Actions = "Exec screenshot -a &" }
+            Entry = "dans 5 secs" { Actions = "Exec screenshot -d &" }
+            Entry = "dans une zone" { Actions = "Exec screenshot -z &" }
+        }
+    }
+    Submenu = "Config" {
+        Submenu = "Pekwm" {
+            Submenu = "Themes" {
+                Entry { Actions = "Dynamic /usr/share/pekwm/scripts/pekwm_themeset.sh /usr/share/pekwm/themes" }
+                Entry { Actions = "Dynamic /usr/share/pekwm/scripts/pekwm_themeset.sh ~/.pekwm/themes" }
+            }
+            Submenu = "Config" {
+                Entry = "dossier pekwm" { Actions = "Exec $FILER ~/.pekwm &" }
+                Entry = "script de lancement" { Actions = "Exec $TERM -e $EDITOR .xinitrc_pek &" }
+                Entry = "éditer le menu" { Actions = "Exec $TERM -e $EDITOR .pekwm/menu &" }
+                Entry = "éditer les raccourcis" { Actions = "Exec $TERM -e $EDITOR .pekwm/keys &" }
+                Entry = "éditer la configuration" { Actions = "Exec $TERM -e $EDITOR .pekwm/config &" }
+                Entry = "éditer les règles" { Actions = "Exec $TERM -e $EDITOR .pekwm/autoproperties &" }
+            }
+            Entry = "Recharger" { Actions = "Reload" }
+            Entry = "Relancer" { Actions = "Restart" }
+        }
+        Entry = "interface" {Actions = "Exec lxappearance &"}
+        Submenu = "Wallpapers" {
+            Entry = "fond aléatoire" { Actions = "Exec fbsetbg -a -r /usr/share/backgrounds &" }
+            Submenu = "fonds d'écran" {
+                Entry { Actions = "Dynamic ~/.pekwm/scripts/pekwall.sh" }
+            }
+        }
+        Submenu = "Conky" {
+            Entry = "éditer conkyrc" { Actions = "Exec $TERM -e $EDITOR .pekwm/conkyrc_pekwm &" }
+            Entry = "lancer conky" { Actions = "Exec conky -c .pekwm/conkyrc_pekwm &" }
+            Entry = "stopper conky" { Actions = "Exec killall conky &" }
+        }
+        Submenu = "Effets 3D" {
+            Entry = "pas d'effet" { Actions = "Exec eyecandy -s &" }
+            Entry = "effet léger" { Actions = "Exec eyecandy -l &" }
+            Entry = "effet complet" { Actions = "Exec eyecandy -f &" }
+        }
+        Entry = "affichage" { Actions = "Exec arandr &" }
+        Entry = "invert colors" { Actions = "Exec xcalib -a -i &" }
+        Entry = "clavier" { Actions = "Exec keyboard_selector &" }
+    }
+    Submenu = "Admin" {
+        Entry = "gestion des partitions" { Actions = "Exec gksu gparted &" }
+        Entry = "utilisation du disque" { Actions = "Exec $TERM -e ncdu &" }
+        Entry = "terminal administrateur" { Actions = "Exec gksu $TERM &"}
+    }
+    Submenu = "Aide" {
+        Entry = "manuel pekwm" { Actions = "Exec $TERM -e man pekwm &" }
+        Entry = "page principale pekwm" { Actions = "Exec $BROWSER http://pekwm.org &" }
+        Entry = "les cahiers du débutant Debian" { Actions = "Exec $BROWSER https://lescahiersdudebutant.fr &" }
+    }
+
+    #Separator {}
+
+    #Submenu = "aller à" {
+    #    SubMenu = "Bureau" {
+            # Create goto menu once per pekwm config reload. The fast way that
+            # will work for most if not all users.
+    #        COMMAND = "/usr/share/pekwm/scripts/pekwm_ws_menu.sh send"
+            # Create goto menu every time the menu is opened. The slow way.
+            # This is what you want if you are using external tools to make
+            # the amount of workspaces something else than what you define in
+            # ~/.pekwm/config. You will know if you want this.
+            # Entry = "" { Actions = "Dynamic /usr/share/pekwm/scripts/pekwm_ws_menu.sh send dynamic" }
+    #    }
+    #    Entry = "Fenêtres.." { Actions = "ShowMenu GotoClient True" }
+    #}
+
+    Separator {}
+
+    Submenu = "Quitter" {
+        Entry = "Logout" { Actions = "Exit" }
+        Entry = "Suspend" { Actions = "Exec systemctl suspend &" }
+        Entry = "Halt" { Actions = "Exec systemctl poweroff &" }
+    }
+}
+
+WindowMenu = "Window Menu" {
+    Entry = "(Un)Stick" { Actions = "Toggle Sticky" }
+    Entry = "(Un)Shade" { Actions = "Toggle Shaded" }
+    Entry = "Iconify " { Actions = "Set Iconified" }
+    Entry = "Command.." { Actions = "ShowCmdDialog" }
+
+    Submenu = "Maximize" {
+        Entry = "Full" { Actions = "Toggle Maximized True True" }
+        Entry = "Horizontal" { Actions = "Toggle Maximized True False" }
+        Entry = "Vertical" { Actions = "Toggle Maximized False True" }
+    }
+    Submenu = "Fill" {
+        Entry = "Full" { Actions = "MaxFill True True" }
+        Entry = "Horizontal" { Actions = "MaxFill True False" }
+        Entry = "Vertical" { Actions = "MaxFill False True" }
+    }
+    Submenu = "Stacking" {
+        Entry = "Raise " { Actions = "Raise" }
+        Entry = "Lower" { Actions = "Lower" }
+        Entry = "Always On Top " { Actions = "Toggle AlwaysOnTop" }
+        Entry = "Always Below" { Actions = "Toggle AlwaysBelow" }
+    }
+    Submenu = "Decor" {
+        Entry = "Decor" { Actions = "Toggle DecorBorder; Toggle DecorTitlebar" }
+        Entry = "Border" { Actions = "Toggle DecorBorder" }
+        Entry = "Titlebar" { Actions = "Toggle DecorTitlebar" }
+
+    }
+    Submenu = "Skip" {
+        Entry = "Menus" { Actions = "Toggle Skip Menus" }
+        Entry = "Focus Toggle" { Actions = "Toggle Skip FocusToggle" }
+        Entry = "Snap" { Actions = "Toggle Skip Snap" }
+    }
+    SubMenu = "Send To" {
+        # Create sendto menu once per pekwm config reload. The fast way that
+        # will work for most if not all users.
+        COMMAND = "/usr/share/pekwm/scripts/pekwm_ws_menu.sh send"
+        # Create sendto menu every time the menu is opened. The slow way.
+        # This is what you want if you are using external tools to make
+        # the amount of workspaces something else than what you define in
+        # ~/.pekwm/config. You will know if you want this.
+        # Entry = "" { Actions = "Dynamic /usr/share/pekwm/scripts/pekwm_ws_menu.sh send dynamic" }
+    }
+
+    Separator {}
+
+    Entry = "Close" { Actions = "Close" }
+    Submenu = "Kill" { Entry = "Kill application" { Actions = "Kill" } }
+  }

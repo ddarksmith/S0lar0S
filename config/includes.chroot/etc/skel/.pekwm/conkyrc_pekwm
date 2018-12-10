@@ -1,0 +1,46 @@
+--[[
+	pekwm conkyrc 3hg @ 2017 © WTFPL
+]]
+
+conky.config = {
+	background = false,
+	update_interval = 1,
+	cpu_avg_samples = 2,
+	net_avg_samples = 2,
+	override_utf8_locale = true,
+	double_buffer = true,
+	no_buffers = true,
+	text_buffer_size = 1024,
+	imlib_cache_size = 0,
+	own_window = true,
+	own_window_type = 'desktop',
+	own_window_transparent = true,
+	own_window_hints = 'undecorated,sticky,skip_taskbar,skip_pager,below',
+	border_inner_margin = 0,
+	border_outer_margin = 0,
+	maximum_width = 600,
+	minimum_width = 600,
+	alignment = 'bm',
+	gap_x = 0,
+	gap_y = 30,
+	draw_shades = true,
+	draw_outline = false,
+	draw_borders = false,
+	draw_graph_borders = false,
+	use_xft = true,
+	font = 'Hack:pixelsize=20',
+	xftalpha = 0.7,
+	default_color = '858585',
+	color1 = '005885',
+	color2 = 'BFBFBF',
+	if_up_strictness = address
+}
+
+conky.text = [[
+${font}${alignc}${color1}${time %A %d %B}${color}
+${font Hack:size=35}${alignc}${color2}${time %I:%M}$color
+${font}${color1}Cpu ${color2}${cpu}% ${goto 150}${voffset -25}${cpugraph 35,448 222222 005885}${color}
+${voffset -10}${cpubar}
+${voffset -10}${membar}
+${voffset -5}${color1}Ram ${color2}${memperc}%${alignr}${color1}Hdd ${color2}${fs_used_perc /}%
+]]

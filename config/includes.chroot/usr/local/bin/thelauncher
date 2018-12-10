@@ -1,0 +1,1265 @@
+#!/usr/bin/env python
+
+"""
+The Launcher, version 2.4.1
+Copyright 2007-2008 Alexander Barinov <thelauncher.at.mail.ru>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+
+##--------------------------------------
+## Centralised configuration management
+##--------------------------------------
+from ConfigParser import SafeConfigParser
+from atexit import register
+
+class ConfigFile:
+        def __init__(self, name, argv = None):
+                self.name = name
+                self.cfg = SafeConfigParser()
+                self.cmdline = {}
+                self._cmdline(argv)
+                self.cfg.read(name)
+                register(self._exit)
+
+        def _cmdline(self, argv):
+                if argv == None or len(argv) == 1:
+                        return
+                for a in argv[1:]:
+                        if not a.startswith('--'):
+                                continue
+                        a = a[2:]
+                        i = a.find('=')
+                        if i == -1:
+                                self.cmdline[a] = 1
+                        else:
+                                try:
+                                        self.cmdline[a[:i]] = int(a[i + 1:])
+                                except:
+                                        self.cmdline[a[:i]] = a[i + 1:]
+
+        def _exit(self):
+                self.cfg.write(open(self.name, 'w'))
+
+        def key(self, section, item, default = None):
+                if self.cmdline.has_key(item.lower()):
+                        return self.cmdline[item.lower()]
+                try:
+                        i = self.cfg.get(section, item)
+                        try:
+                                return int(i)
+                        except ValueError:
+                                return i
+                except:
+                        if default != None:
+                                if section != 'CmdLine':
+                                        self.set_key(section, item, default)
+                                return default
+                        else:
+                                raise NameError, 'Key "%s" not found in section [%s] of %s'%(item, section, self.name)
+
+        def set_key(self, section, item, value):
+                if self.cmdline.has_key(item.lower()):
+                        self.cmdline[item.lower()] = value
+                        return
+                if not self.cfg.has_section(section):
+                        self.cfg.add_section(section)
+                self.cfg.set(section, item, str(value))
+
+
+##-------------------------------------------------------
+## Basic communications between two programs using pipes
+##-------------------------------------------------------
+from threading import Thread
+from os import lstat, mkdir, mkfifo, remove
+from os.path import join, exists, isdir
+from signal import signal, alarm, SIGALRM
+from atexit import register
+from stat import S_ISFIFO, ST_MODE
+
+class Communicator(Thread):
+        def __init__(self, path, fin, fout):
+                Thread.__init__(self)
+                self.path = path
+                self.fin = join(path, fin)
+                self.fout = join(path, fout)
+                self.setDaemon(True)
+                signal(SIGALRM, self._alarm)
+                register(self._exit)
+                self.start()
+
+        def _alarm(self, *args):
+                raise IOError, 'Pipe %s has no readers'%self.fout
+
+        def _process(self, line):
+                pass
+
+        def _exit(self):
+                if exists(self.fin) and S_ISFIFO(lstat(self.fin)[ST_MODE]):
+                        remove(self.fin)
+
+        def run(self):
+                if exists(self.path):
+                        if not isdir(self.path):
+                                raise IOError, '%s is not a directory'%self.path
+                else:
+                        mkdir(self.path, 0700)
+                if exists(self.fin):
+                        if not S_ISFIFO(lstat(self.fin)[ST_MODE]):
+                                raise IOError, '%s is not a pipe'%self.fin
+                else:
+                        mkfifo(self.fin, 0600)
+                while True:
+                        f = open(self.fin, 'r')
+                        self._process(f.readline())
+                        f.close()
+
+        def message(self, message):
+                if exists(self.fout) and S_ISFIFO(lstat(self.fout)[ST_MODE]):
+                        alarm(3)
+                        f = open(self.fout, 'w')
+                        f.write(message)
+                        f.close()
+                        alarm(0)
+                else:
+                        raise IOError, '%s is not beind read by anyone'%self.fout
+
+
+##---------------
+## Icon provider
+##---------------
+import gtk
+from os import listdir
+from os.path import basename, join, isdir, isfile, islink
+from cPickle import load, dump
+
+class IPGtk:
+        def __init__(self):
+                self.theme = gtk.icon_theme_get_default()
+
+        def provide_pixbuf(self, name, size):
+                if name != '' and self.theme.has_icon(name):
+                        try:
+                                return(self.theme.load_icon(name, size, 0))
+                        except:
+                                return None
+                return None
+
+class IPFile:
+        def __init__(self, path, recursive):
+                self.files = {}
+                if isdir(path):
+                        self._load_dir(path, recursive)
+
+        def _load_dir(self, path, recursive):
+                for i in listdir(path):
+                        n = join(path, i)
+                        if isfile(n) or islink(n):
+                                self.files[i] = n
+                        elif recursive and isdir(i):
+                                self._load_dir(n, False)
+
+        def provide_pixbuf(self, name, size):
+                if self.files.has_key(name):
+                        return gtk.gdk.pixbuf_new_from_file_at_size(self.files[name], size, size)
+                else:
+                        return None
+
+class IPDirect:
+        def provide_pixbuf(self, name, size):
+                if name.startswith('/') and (isfile(name) or islink(name)):
+                        return gtk.gdk.pixbuf_new_from_file_at_size(name, size, size)
+
+class IPFallback:
+        def __init__(self):
+                self.theme = gtk.icon_theme_get_default()
+
+        def provide_pixbuf(self, name, size):
+                return self.theme.load_icon('application-x-executable', size, 0)
+
+class IconProvider:
+        def __init__(self):
+                self.size = CFG.key('UI', 'IconSize', -1)
+                self.cache = join(HOME, '.cache-icons')
+                if exists(self.cache):
+                        if not isdir(self.cache):
+                                raise IOError, '%s is not a directory'%self.cache
+                else:
+                        mkdir(self.cache)
+                if self.size == -1:
+                        l = gtk.Label('Ag')
+                        s = int(l.size_request()[1]*2)
+                        self.size = s
+                        for i in [16, 24, 32, 48, 64, 96, 128, 192, 256]:
+                                if s > int(0.8*i) and s < int(1.2*i):
+                                        self.size = i
+                self.providers = [IPDirect(),
+                                  IPFile(join(HOME, 'icons'), False),
+                                  IPGtk(),
+                                  IPFile('/usr/share/pixmaps', True),
+                                  IPFile('/usr/share/icons', False),
+                                  IPFallback()]
+                self.execute = self.get('gtk-execute', False, self.size/2)
+                self.execute_updated = None
+
+        def _compact(self, name, size, running):
+                n = str(size)
+                if running:
+                        n += 'r'
+                else:
+                        n += 'u'
+                for i in name.split('/'):
+                        if len(i) > 0:
+                                n += i[0]
+                n += basename(name[1:])
+                return n
+
+        def _load(self, name):
+                f = open(name)
+                a, b, w, h, r = load(f)
+                return gtk.gdk.pixbuf_new_from_data(f.read(), gtk.gdk.COLORSPACE_RGB, a, b, w, h, r)
+
+        def _save(self, name, pixbuf):
+                f = open(name, 'w')
+                dump((pixbuf.get_has_alpha(), pixbuf.get_bits_per_sample(), pixbuf.get_width(),
+                      pixbuf.get_height(), pixbuf.get_rowstride()), f)
+                f.write(pixbuf.get_pixels())
+
+        def _get_cached(self, name, size):
+                n = join(self.cache, self._compact(name, size, False))
+                if isfile(n):
+                        return self._load(n)
+                else:
+                        p = self._get_direct(name, size)
+                        self._save(n, p)
+                        return p
+
+        def _get_direct(self, name, size):
+                for i in self.providers:
+                        p = i.provide_pixbuf(name, size)
+                        if p != None:
+                                w = p.get_width()
+                                if w < int(0.95*size) or w > int(1.05*size):
+                                        p = p.scale_simple(size, size, gtk.gdk.INTERP_HYPER)
+                                return p
+                raise IOError, 'Unable to load %s'%n
+
+        def get(self, name, running, size = None):
+                if size == None:
+                        size = self.size
+                n = join(self.cache, self._compact(name, size, running))
+                if isfile(n):
+                        p = self._load(n)
+                else:
+                        p = self._get_cached(name, size)
+                        if running:
+                                s = self.size/2
+                                w, h = p.get_width(), p.get_height()
+                                # TODO: pygtk crashes on this
+                                #self.execute.composite(p, w - s, h - s, s, s, w - s, h - s, 1, 1, gtk.gdk.INTERP_HYPER, 255)
+                                c = p.copy()
+                                self.execute.composite(c, w - s, h - s, s, s, w - s, h - s, 1, 1, gtk.gdk.INTERP_HYPER, 255)
+                                self._save(n, c)
+                                return c
+                return p
+
+        def update_cache(self, name, running, size = None):
+                if size == None:
+                        size = self.size
+                pc = self._get_cached(name, size)
+                pd = self._get_direct(name, size)
+                n = join(self.cache, self._compact(name, size, running))
+                # TODO: 2.4.2 wrong logic, liferea pixmap not updated
+                if not running:
+                        if pc.get_pixels() != pd.get_pixels():
+                                self._save(n, pd)
+                                return pd
+                else:
+                        if self.execute_updated == None:
+                                p = self.update_cache('gtk-execute', False, self.size/2)
+                                if p == None:
+                                        self.execute_updated = False
+                                else:
+                                        self.execute = p
+                                        self.execute_updated = True
+                        if pc.get_pixels() != pd.get_pixels() or self.execute_updated:
+                                self._save(join(self.cache, self._compact(name, size, False)), pd)
+                                s = self.size/2
+                                w, h = pd.get_width(), pd.get_height()
+                                # TODO: pygtk crashes on this
+                                #self.execute.composite(pd, w - s, h - s, s, s, w - s, h - s, 1, 1, gtk.gdk.INTERP_HYPER, 255)
+                                #self._save(n, pd)
+                                #return pd
+                                c = pd.copy()
+                                self.execute.composite(c, w - s, h - s, s, s, w - s, h - s, 1, 1, gtk.gdk.INTERP_HYPER, 255)
+                                self._save(n, c)
+                                return c
+                return None
+
+
+##--------------
+## Menu loaders
+##--------------
+from os import listdir
+from os.path import basename, join, isfile, isdir, getmtime
+from cPickle import load, dump
+from locale import getdefaultlocale as getlocale
+
+class MenuLoader:
+        def __init__(self, path):
+                self.path = path
+                self.cache = join(HOME, '.cache-apps')
+                if exists(self.cache):
+                        if not isdir(self.cache):
+                                raise IOError, '%s is not a directory'%self.cache
+                else:
+                        mkdir(self.cache)
+
+        def _compact(self, name):
+                n = ''
+                for i in name.split('/'):
+                        if len(i) > 0:
+                                n += i[0]
+                n += basename(name[1:])
+                return n
+
+        def _load_dir(self, path):
+                l = []
+                for f in listdir(path):
+                        fn = join(path, f)
+                        if not isdir(fn):
+                                cn = join(self.cache, self._compact(fn))
+                                cm = 0
+                                fm = int(getmtime(fn))
+                                if isfile(cn):
+                                        f = open(cn)
+                                        cm = int(f.readline())
+                                if cm == fm:
+                                        r = load(f)
+                                else:
+                                        r = self._load_file(fn)
+                                        f = open(cn, 'w')
+                                        f.write(str(fm) + '\n')
+                                        dump(r, f)
+                                if r != None:
+                                        l += r
+                        else:
+                                l += self._load_dir(fn)
+                return l
+
+        def load(self):
+                if isdir(self.path):
+                        return self._load_dir(self.path)
+                else:
+                        return []
+
+class MLFdo(MenuLoader):
+        # TODO: 2.5 simplify back the code as speed is not that relevant now
+        def __init__(self, path):
+                MenuLoader.__init__(self, path)
+                l = getlocale(('LC_MESSAGES', 'LC_ALL', 'LC_CTYPE', 'LANG', 'LANGUAGE'))[0]
+                self.locales = []
+                if l != None:
+                        ll = len(l)
+                        self.locales.append(('[%s]='%l, ll + 3))
+                else:
+                        ll = 0
+                if ll > 5:
+                        self.locales.append(('[%s]='%l[:5], 8))
+                if ll > 2:
+                        self.locales.append(('[%s]='%l[:2], 5))
+                self.locales.append(('[en_GB]=', 8))
+                self.locales.append(('[en]=', 5))
+                self.locales.append(('[POSIX]=', 8))
+                self.locales.append(('=', 1))
+
+        def _load_file(self, file):
+                l = len(self.locales)
+                terms = [['Name', len('Name'), True, '', l],
+                         ['Comment', len('Comment'), True, '', l],
+                         ['Categories', len('Categories'), False, ''],
+                         ['Terminal', len('Terminal'), False, ''],
+                         ['Icon', len('Icon'), False, ''],
+                         ['Exec', len('Exec'), False, ''],
+                         ['GenericName', len('GenericName'), True, '', l]]
+                for l in open(file).readlines():
+                        l = l.strip()
+                        for i in terms:
+                                if l.startswith(i[0]):
+                                        if i[2]:
+                                                l = l[i[1]:]
+                                                for j in range(i[4]):
+                                                        if l.startswith(self.locales[j][0]):
+                                                                i[3], i[4] = l[self.locales[j][1]:], j
+                                                                break
+                                                else:
+                                                        continue
+                                                break
+                                        else:
+                                                i[3] = l[i[1] + 1:]
+                                                break
+                comm = terms[5][3]
+                if comm == '':
+                        return None
+                f = comm.find('%')
+                # TODO: 2.4.2 KDE apps dont start
+                if f != -1:
+                        comm = comm[:f]
+                name = terms[0][3]
+                if name == '':
+                        return None
+                sect = terms[2][3].replace(';', '/').rstrip('/')
+                desc = terms[1][3]
+                if desc == '':
+                        desc = terms[6][3]
+                        if desc == '':
+                                desc = sect
+                                if desc == '':
+                                        desc = name
+                if terms[3][3] == 'false':
+                        term = False
+                else:
+                        term = True
+                icon = terms[4][3]
+                return [[name, desc, sect, icon, comm, term]]
+
+class MLDebian(MenuLoader):
+        # TODO: 2.5 simplify back the code as speed is not that relevant now
+        def _token(self, line, token, s1 = '"', s2 = '"'):
+                i = line.find(token)
+                if i == -1:
+                        return ''
+                s = line.find(s1, i + len(token))
+                e = line.find(s2, s + len(s1))
+                if s == -1 or e == -1:
+                        return ''
+                else:
+                        return line[s + 1:e]
+
+        def _process_line(self, line):
+                comm = self._token(line, 'command')
+                if comm == '':
+                        return
+                name = self._token(line, ' title')
+                if name == '':
+                        name = self._token(line, 'package', '(', ')')
+                        if name == '':
+                                return
+                sect = self._token(line, 'section')
+                if sect.startswith('Screen') or sect.startswith('WindowManagers'):
+                        return
+                desc = self._token(line, 'description')
+                if desc == '':
+                        desc = self._token(line, 'longtitle')
+                        if desc == '':
+                                desc = sect
+                                if desc == '':
+                                        desc = name
+                if self._token(line, 'needs') == 'text':
+                        term = True
+                else:
+                        term = False
+                icon = self._token(line, 'icon')
+                if icon == '':
+                        icon = self._token(line, 'icon32x32')
+                        if icon == '':
+                                icon = self._token(line, 'icon16x16')
+                self.items.append([name, desc, sect, icon, comm, term])
+
+        def _load_file(self, name):
+                self.items = []
+                cl = ''
+                for l in open(name).readlines():
+                        l = l.strip()
+                        if l.startswith('?'):
+                                if cl != '':
+                                        self._process_line(cl)
+                                cl = l
+                        elif cl.endswith('\\'):
+                                cl = cl[:-1] + ' ' + l
+                if cl != '':
+                        self._process_line(cl)
+                if len(self.items) != 0:
+                        return self.items
+                else:
+                        return None
+
+
+##---------------------
+## GTK+ User Interface
+##---------------------
+import gtk, gobject, pango
+from time import time as gettime
+from os.path import join
+from threading import Thread, Lock
+from time import sleep
+
+class GtkView:
+        def __init__(self):
+                self.spacing = 4
+                self.size = -1
+                self.index = {}
+                self.index_lock = Lock()
+                if CFG.key('UI', 'Columns', -1) == -1:
+                        l = gtk.Label('The quick brown fox jumps over the lazy dog')
+                        self.width = int(l.size_request()[0]*0.9)
+                self.w = gtk.ScrolledWindow()
+                self.w.set_shadow_type(gtk.SHADOW_IN)
+                self.w.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+                v = gtk.Viewport()
+                v.set_shadow_type(gtk.SHADOW_NONE)
+                v.modify_bg(gtk.STATE_NORMAL, self.w.rc_get_style().base[0])
+                self.w.add(v)
+                v.connect('size-allocate', self.on_size)
+                b = gtk.VBox(False, self.spacing)
+                b.set_border_width(2*self.spacing)
+                v.add(b)
+                self.lists = []
+                # TODO 2.4.2 forget new applications button
+                self.lists.append(self._list('Recently installed', b))
+                self.lists.append(self._list('Frequently used', b))
+                self.lists.append(self._list('Section:', b))
+
+        def _list(self, name, box):
+                v = gtk.Viewport()
+                v.set_shadow_type(gtk.SHADOW_NONE)
+                box.pack_start(v, expand = False, fill = True)
+                a = gtk.Alignment()
+                a.set_padding(0, 0, self.spacing, self.spacing)
+                v.add(a)
+                hb = gtk.HBox(False, self.spacing)
+                a.add(hb)
+                h = gtk.Label('<b>%s</b>'%name)
+                h.set_use_markup(True)
+                h.set_alignment(0.5, 0.5)
+                hb.pack_start(h, expand = False, fill = True)
+                l = gtk.ListStore(gobject.TYPE_STRING, gobject.type_from_name('GdkPixbuf'), gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
+                i = gtk.IconView(l)
+                i.set_markup_column(0)
+                i.set_pixbuf_column(1)
+                # TODO: 2.5 larger icons for touchscreens
+                i.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+                i.set_margin(self.spacing)
+                i.set_spacing(self.spacing/2)
+                i.set_row_spacing(2*self.spacing)
+                i.set_column_spacing(2*self.spacing)
+                box.pack_start(i, expand = False, fill = True)
+                i.connect('selection-changed', self.on_selection)
+                i.connect('item-activated', self.on_activated)
+                return [v, i, l]
+
+        def _fill_list(self, header, iconview, iconlist, applist):
+                if len(applist) == 0 and len(header.get_child().get_child().get_children()) != 2:
+                        header.set_no_show_all(True)
+                        header.hide()
+                else:
+                        header.set_no_show_all(False)
+                        header.show_all()
+                if len(applist) == 0:
+                        iconview.set_no_show_all(True)
+                        iconview.hide()
+                else:
+                        iconview.set_no_show_all(False)
+                        iconview.show_all()
+                # TODO: 2.4.2 incremental changes instead
+                self.index_lock.acquire()
+                for l in self.index:
+                        for i in self.index[l][1]:
+                                if i[0] == iconlist:
+                                        self.index[l][1].remove(i)
+                iconlist.clear()
+                for l in applist:
+                        n = l[0].replace('&', '&amp;').replace('<', '&lt;').replace('<', '&gt;')
+                        d = l[1].replace('&', '&amp;').replace('<', '&lt;').replace('<', '&gt;')
+                        i = iconlist.append(['<b>%s</b>\n%s'%(n, d), ICONS.get(l[2], l[3]), l[0], [l[2], l[3]]])
+                        if not self.index.has_key(l[2]):
+                                self.index[l[2]] = [l[3], []]
+                                self.index[l[2]][1].append((iconlist, i))
+                self.index_lock.release()
+
+        def _lookup(self, iconview, position, increment):
+                a = iconview.get_allocation()
+                x = a.width/self.columns*(position[0]%self.columns) + a.width/self.columns/2
+                if increment > 0:
+                        y1 = 0
+                        y2 = a.height
+                else:
+                        y1 = a.height - 1
+                        y2 = -1
+                while increment != 0:
+                        for y in range(y1, y2, increment):
+                                if iconview.get_path_at_pos(x, y) == position:
+                                        if abs(increment) == 1:
+                                                return y + a.y
+                                        else:
+                                                if increment > 0:
+                                                        y1 = y - increment
+                                                        y2 = y + 1
+                                                else:
+                                                        y1 = y - increment
+                                                        y2 = y - 1
+                                                increment /= 2
+                                                break
+                        else:
+                                if abs(increment) == 1:
+                                        return 0
+                                increment /= 2
+
+        def _next_widget(self, iconview, increment):
+                i = -1
+                for l in range(len(self.lists)):
+                        if self.lists[l][1] == iconview:
+                                i = l + increment
+                if i >= 0 or i < len(self.lists):
+                        if increment > 0:
+                                f = len(self.lists)
+                        else:
+                                f = -1
+                        for j in range(i, f, increment):
+                                if self.lists[j][1].get_property('visible'):
+                                        return self.lists[j][1]
+                return False
+
+        def _scroll(self, header, view):
+                # TODO: 2.4.2 fix flicker with F1-F3
+                h = header.get_allocation()
+                v = view.get_allocation()
+                if v.y == -1:
+                        v = h
+                self.focus(view, 0)
+                self.w.get_vadjustment().clamp_page(h.y  - 2*self.spacing, v.y + v.width + 2*self.spacing)
+
+        def on_size(self, widget, size, *args):
+                if size.width == self.size:
+                        return
+                self.columns = CFG.key('UI', 'Columns')
+                if self.columns == -1:
+                        self.columns = size.width/self.width
+                if self.columns < 1:
+                        self.columns = 1
+                w = (size.width - (9 + 2*self.columns)*self.spacing)/self.columns
+                c = size.width/w
+                for i in self.lists:
+                        i[1].set_item_width(w)
+                        i[1].set_columns(c)
+                self.size = size.width
+
+        def on_selection(self, widget):
+                p = widget.get_cursor()
+                if p and p[0]:
+                        p = p[0]
+                else:
+                        return
+                # TODO: need better way to find coordinates
+                if not self._next_widget(widget, -1) and p[0] < self.columns:
+                        self.w.get_vadjustment().set_value(0)
+                elif not self._next_widget(widget, 1) and len(widget.get_model()) - p[0] <= self.columns:
+                        a = self.w.get_vadjustment()
+                        a.set_value(a.get_property('upper') - a.get_property('page-size'))
+                else:
+                        y1 = self._lookup(widget, p, 32)
+                        y2 = self._lookup(widget, p, -32)
+                        if y1 != 0 or y2 != 0:
+                                self.w.get_vadjustment().clamp_page(y1 - 2*self.spacing, y2 + 2*self.spacing)
+
+        def on_key(self, event, *args):
+                if gtk.gdk.keyval_name(event.keyval) == 'F1' and self.lists[0][1].get_property('visible'):
+                        self._scroll(self.lists[0][0], self.lists[0][1])
+                        return True
+                if gtk.gdk.keyval_name(event.keyval) == 'F2' and self.lists[1][1].get_property('visible'):
+                        self._scroll(self.lists[1][0], self.lists[1][1])
+                        return True
+                if gtk.gdk.keyval_name(event.keyval) == 'F3' and self.lists[2][0].get_property('visible'):
+                        self._scroll(self.lists[2][0], self.lists[2][1])
+                        self.section.grab_focus()
+                        self.section.popup()
+                        return True
+                f = False
+                for i in self.lists:
+                        if i[1].is_focus():
+                                f = i[1]
+                if f and f.get_cursor() and len(f.get_selected_items()) != 0:
+                        c = f.get_cursor()[0][0]
+                        l = len(f.get_model())
+                        if gtk.gdk.keyval_name(event.keyval) == 'Up' and c < self.columns:
+                                w = self._next_widget(f, -1)
+                                if w:
+                                        l = len(w.get_model()) - 1
+                                        p = l/self.columns*self.columns + c%self.columns
+                                        if c%self.columns > l:
+                                                p = l
+                                        elif p > l:
+                                                p -= self.columns
+                                        self.focus(w, p)
+                                return True
+                        if gtk.gdk.keyval_name(event.keyval) == 'Down' and l - c <= self.columns:
+                                w = self._next_widget(f, 1)
+                                if w:
+                                        tc = c%self.columns
+                                        if tc > len(w.get_model()) - 1:
+                                                tc = len(w.get_model()) - 1
+                                        self.focus(w, tc)
+                                return True
+                        # TODO: 2.4.2 PgUp and PgDn, Home and End
+                return False
+
+        def on_activated(self, widget, path, *args):
+                APPS.run(widget.get_model()[path][2])
+                # TODO: 2.5 Shift-Click and middle click runs without closing
+                UI.on_close(False)
+
+        def widget(self):
+                return self.w
+
+        def show(self, filter, section):
+                if section == 'None':
+                        section = False
+                elif section == 'All':
+                        section = True
+                a = APPS.select(filter, section)
+                for i in range(len(a)):
+                        self._fill_list(self.lists[i][0], self.lists[i][1], self.lists[i][2], a[i])
+                if len(a[0]) == 0 and len(a[1]) == 0 and len(a[2]) == 0:
+                        self.lists[2][0].hide_all()
+
+        def unfocus(self):
+                for i in self.lists:
+                        i[1].unselect_all()
+
+        def focus(self, widget = None, item = None):
+                self.unfocus()
+                for i in self.lists:
+                        if widget == None and i[1].get_property('visible'):
+                                widget = i[1]
+                if item == None:
+                        item = 0
+                widget.set_cursor((item))
+                widget.select_path((item))
+                widget.grab_focus()
+
+        def update_icons(self):
+                # TODO: 2.4.2 everything here is wrong
+                for l in APPS.select('', True):
+                        for i in l:
+                                p = ICONS.update_cache(i[2], i[3])
+                                if p != None:
+                                        self.index_lock.acquire()
+                                        if self.index.has_key(i[2]) and self.index[i[2]][0] == i[3]:
+                                                for l, n in self.index[i[2]][1]:
+                                                        gtk.gdk.threads_enter()
+                                                        l.set_value(n, 1, p)
+                                                        gtk.gdk.threads_leave()
+                                        self.index_lock.release()
+
+        def pack_section(self, section):
+                self.section = section
+                self.lists[2][0].get_child().get_child().pack_start(section, expand = False, fill = True)
+                self.lists[0][0].get_child().get_child().set_size_request(-1, section.size_request()[1])
+                self.lists[1][0].get_child().get_child().set_size_request(-1, section.size_request()[1])
+
+        def scroll_section(self):
+                if len(self.lists[2][2]) > 0:
+                        self._scroll(self.lists[2][0], self.lists[2][1])
+                else:
+                        a = self.w.get_vadjustment()
+                        a.set_value(a.get_property('upper') - a.get_property('page-size'))
+                        if len(self.lists[1][2]) > 0:
+                                l = self.lists[1]
+                        elif len(self.lists[0][2]) > 0:
+                                l = self.lists[0]
+                        else:
+                                self.w.get_vadjustment().set_value(0)
+                                return
+                        self.focus(l[1], len(l[2]) - 1)
+
+class GtkControl:
+        def __init__(self, view):
+                self.old_section = None
+                self.view = view
+                self.search_box = gtk.HBox(False, 4)
+                self.search_box.set_no_show_all(True)
+                self.search_box.pack_start(gtk.Label('Find:'), expand = False, fill = True)
+                self.search_entry = gtk.Entry()
+                self.search_box.pack_start(self.search_entry, expand = True, fill = True)
+                self.search_entry.connect('changed', self.on_entry_changed)
+                self.button = gtk.Button()
+                s,s = gtk.icon_size_lookup(gtk.ICON_SIZE_MENU)
+                self.button.add(gtk.image_new_from_pixbuf(ICONS.get('gtk-close', False, s)))
+                self.search_box.pack_start(self.button, expand = False, fill = True)
+                self.button.connect('clicked', self.on_close)
+                self.section = gtk.combo_box_new_text()
+                self.section.append_text('All')
+                self.section.append_text('-')
+                for t in APPS.tags():
+                        self.section.append_text(t)
+                self.section.append_text('-')
+                self.section.append_text('None')
+                self.section.set_row_separator_func(self._separator)
+                self.view.pack_section(self.section)
+                if len(APPS.select('', False)[1]) < 5:
+                        self.section.set_active(0)
+                        self.view.show('', 'All')
+                else:
+                        self.section.set_active(len(self.section.get_model()) - 1)
+                        self.view.show('', 'None')
+                self.handler_changed = self.section.connect('changed', self.on_section_changed)
+                self.section.connect('notify::popup-shown', self.on_section_popup)
+
+        def _separator(self, model, iter):
+                if model.get_value(iter, 0) == '-':
+                        return True
+                return False
+
+        def _show_search(self):
+                self.view.unfocus()
+                self.search_box.set_no_show_all(False)
+                self.search_box.show_all()
+                self.search_entry.grab_focus()
+
+        def on_entry_changed(self, *args):
+                f = self.search_entry.get_text()
+                if f != '' and self.section.get_active_text() != 'All' and self.old_section == None:
+                        self.old_section = self.section.get_active()
+                        self.section.handler_block(self.handler_changed)
+                        self.section.set_active(0)
+                        self.section.handler_unblock(self.handler_changed)
+                if f == '' and self.old_section != None:
+                        self.section.handler_block(self.handler_changed)
+                        self.section.set_active(self.old_section)
+                        self.section.handler_unblock(self.handler_changed)
+                        self.old_section = None
+                s = self.section.get_active_text()
+                self.view.show(f, s)
+                if f == '':
+                        self.search_box.hide_all()
+                        self.view.focus()
+
+        def on_section_popup(self, *args):
+                if UI.mode == 'menu':
+                        if self.section.get_property('popup-shown'):
+                                UI.win.handler_block(UI.handler_focus)
+                        else:
+                                UI.win.handler_unblock(UI.handler_focus)
+                if not self.section.get_property('popup-shown'):
+                        self.view.scroll_section()
+
+        def on_section_changed(self, *args):
+                self.view.show(self.search_entry.get_text(), self.section.get_active_text())
+                # TODO: 2.4.2 locks when icons are updated
+                while gtk.events_pending():
+                        gtk.main_iteration()
+                self.view.scroll_section()
+
+        def on_close(self, *args):
+                self.search_entry.set_text('')
+                # TODO: 2.4.2 should focus on the last item if applicable
+                self.view.focus()
+                self.search_box.hide_all()
+
+        def on_key(self, event):
+                ## Quick search
+                if not self.search_entry.is_focus():
+                        a = gtk.gdk.CONTROL_MASK | gtk.gdk.MOD1_MASK | gtk.gdk.META_MASK
+                        if event.string != '' and event.string.isalnum() and event.state & a == 0:
+                                if not self.search_box.get_property('visible'):
+                                        self._show_search()
+                                t = self.search_entry.get_text() + event.string
+                                self.search_entry.set_text(t)
+                                self.search_entry.grab_focus()
+                                self.search_entry.select_region(-1, -1)
+                                return True
+                ## Enter in search field
+                if gtk.gdk.keyval_name(event.keyval) == 'Return' and self.search_entry.is_focus():
+                        self.view.focus()
+                        return True
+                ## Escape in search field
+                if gtk.gdk.keyval_name(event.keyval) == 'Escape' and self.search_entry.is_focus():
+                        self.on_close()
+                        return True
+                # TODO: 2.6 configurable keybindings
+                ## Ctrl-F
+                if event.state.first_value_name == 'GDK_CONTROL_MASK' and gtk.gdk.keyval_name(event.keyval) == 'f':
+                        if self.search_box.get_property('visible'):
+                                self.on_close()
+                        else:
+                                self._show_search()
+                        return True
+                return self.view.on_key(event)
+
+        def update_icons(self):
+                s,s = gtk.icon_size_lookup(gtk.ICON_SIZE_MENU)
+                p = ICONS.update_cache('gtk-close', False, s)
+                if p != None:
+                        gtk.gdk.threads_enter()
+                        self.button.get_child().set_from_pixbuf(p)
+                        gtk.gdk.threads_leave()
+
+        def widget(self):
+                return self.search_box
+
+class GtkLauncher(Communicator):
+        def __init__(self):
+                p = CFG.key('CmdLine', 'prefix', '')
+                Communicator.__init__(self, join(HOME, 'run'), p + '.in', p + '.out')
+                gtk.gdk.threads_init()
+
+        def _process(self, line):
+                if line.startswith('QUIT'):
+                        gtk.gdk.threads_enter()
+                        UI.frompanel = True
+                        UI.on_close(True)
+                        gtk.gdk.threads_leave()
+
+class GtkUI:
+        def __init__(self):
+                self.invoke = CFG.key('CmdLine', 'run', 'standalone')
+                self.mode = CFG.key('UI', 'Mode', 'standard')
+                # TODO: 2.5 custom gtk theme loading
+                self.win = gtk.Window()
+                self.win.set_title('The Launcher')
+                CFG.key('Window', 'Width', int(0.7*self.win.get_screen().get_width()))
+                CFG.key('Window', 'Height', int(0.7*self.win.get_screen().get_height()))
+                # TODO: 2.7 window icon
+                if self.mode == 'fullscreen':
+                        self.win.set_decorated(False)
+                        self.win.maximize()
+                if self.mode == 'menu':
+                        self.win.set_property('skip-taskbar-hint', True)
+                        self.win.set_property('skip-pager-hint', True)
+                        self.win.set_decorated(False)
+                        self._menu_init()
+                if self.invoke == 'managed':
+                        self.comm = GtkLauncher()
+                ## The rest
+                self.win.connect('destroy-event', self.on_close)
+                self.win.connect('delete-event', self.on_close)
+                self.win.connect('key-press-event', self.on_key)
+                if self.mode == 'menu':
+                        self.handler_focus = self.win.connect('focus-out-event', self.on_close)
+                # TODO: 2.5 sidebar for mouse usage
+                vb = gtk.VBox(False, 4)
+                vb.set_border_width(4)
+                self.win.add(vb)
+                self.view = GtkView()
+                vb.pack_start(self.view.widget(), expand = True, fill = True)
+                self.control = GtkControl(self.view)
+                vb.pack_start(self.control.widget(), expand = False, fill = True)
+                self._position()
+                self.win.show_all()
+                self._position()
+                self.view.focus()
+
+        def _menu_init(self):
+                s = self.win.get_screen()
+                mx, my = CFG.key('CmdLine', 'MenuX'), CFG.key('CmdLine', 'MenuY')
+                mw, mh = CFG.key('CmdLine', 'MenuW'), CFG.key('CmdLine', 'MenuH')
+                w, h = CFG.key('Window', 'Width'), CFG.key('Window', 'Height')
+                if my < s.get_height()/2:
+                        y = my + mh - 4
+                else:
+                        y = my - h + 4
+                if mx < s.get_width()/2:
+                        x = mx
+                else:
+                        x = mx + mw - w
+                if x < 0:
+                        x = 0
+                if x + w > s.get_width():
+                        x = s.get_width() - w
+                CFG.set_key('Window', 'X', x)
+                CFG.set_key('Window', 'Y', y)
+
+        def _position(self):
+                w, h = CFG.key('Window', 'Width'), CFG.key('Window', 'Height')
+                self.win.set_default_size(w, h) 
+                self.win.resize(w, h)
+                x, y = CFG.key('Window', 'X', -1), CFG.key('Window', 'Y', -1)
+                if x != -1 and y != -1:
+                        self.win.move(x, y) 
+
+        def _update_thread(self):
+                sleep(0.1)
+                self.view.update_icons()
+                self.control.update_icons()
+
+        def on_close(self, *args):
+                if self.mode == 'standard':
+                        p = self.win.get_position()
+                        s = self.win.get_size()
+                        CFG.set_key('Window', 'X', p[0])
+                        CFG.set_key('Window', 'Y', p[1])
+                        CFG.set_key('Window', 'Width', s[0])
+                        CFG.set_key('Window', 'Height', s[1])
+                if self.invoke == 'managed':
+                        if args[0] != True:
+                                self.comm.message('QUIT')
+                gtk.main_quit()
+
+        def on_key(self, widget, event, *args):
+                if self.control.on_key(event) == False:
+                        if gtk.gdk.keyval_name(event.keyval) == 'Escape':
+                                self.on_close(False)
+                                return True
+                        return False
+                else:
+                        return True
+
+        def update_icons(self):
+                gtk.gdk.threads_init()
+                t = Thread(target = self._update_thread)
+                t.setDaemon(True)
+                t.start()
+
+        def run(self):
+                gtk.main()
+
+
+##--------------------
+## Core functionality
+##--------------------
+from time import time as gettime
+from os import mkdir, listdir, spawnlp, P_NOWAIT
+from os.path import join, exists, isdir, isfile
+from atexit import register
+from math import pow
+
+AP_DESC, AP_TAGS, AP_ICON, AP_CMD, AP_TEXT, AP_RUN, AP_ADDED, AP_CALLS = range(8)
+
+class AppList:
+        def __init__(self):
+                self.apps = {}
+                self.history = []
+                self.file_apps = join(HOME, 'applications')
+                self.file_history = join(HOME, 'history')
+                if exists(HOME):
+                        if not isdir(HOME):
+                                raise IOError, '%s is not a directory'%self.path
+                else:
+                        mkdir(HOME)
+
+        def _load_applist(self):
+                if isfile(self.file_apps):
+                        for l in open(self.file_apps).readlines():
+                                at, an = l.strip().split(':', 1)
+                                if self.apps.has_key(an):
+                                        self.apps[an][AP_ADDED] = int(at)
+                        fr = False
+                else:
+                        fr = True
+                t = int(gettime())
+                for a in self.apps:
+                        if self.apps[a][AP_ADDED] == 0:
+                                if fr:
+                                        self.apps[a][AP_ADDED] = t - 8*86400
+                                else:
+                                        self.apps[a][AP_ADDED] = t
+
+        def _load_history(self):
+                if isfile(self.file_history):
+                        ct = gettime()
+                        for l in open(self.file_history).readlines():
+                                t, n = l.strip().split(':', 1)
+                                self.history.append((int(t), n))
+                                if self.apps.has_key(n):
+                                        # TODO: 2.5 intelligent half-life period
+                                        self.apps[n][AP_CALLS] += pow(0.5, (ct - float(t))/30/86400)
+
+        def _find_running(self):
+                r = []
+                # TODO: 2.6 needs serious polish: no others processes, better shells handling
+                for i in listdir('/proc'):
+                        n = join('/proc', i, 'cmdline')
+                        if i[0].isdigit() and isfile(n):
+                                l = open(n, 'r').readline().strip()
+                                if l.find('\0'):
+                                        l = l[:l.find('\0')].strip()
+                                if l != '':
+                                        r.append(l)
+                for a in self.apps:
+                        for i in r:
+                                c1 = self.apps[a][AP_CMD].strip()
+                                n1 = c1[c1.rfind('/') + 1:]
+                                c2 = i.strip()
+                                n2 = c2[c2.rfind('/') + 1:]
+                                if c1.find(n2) != -1 or c2.find(n1) != -1:
+                                        self.apps[a][AP_RUN] = True
+
+        def _exit(self):
+                f = open(self.file_apps, 'w')
+                for a in self.apps:
+                        f.write('%s:%s\n'%(self.apps[a][AP_ADDED], a))
+                f.close()
+                self.history.sort(lambda x, y: cmp(y[0], x[0]))
+                l = len(self.apps)*5
+                if len(self.history) > l:
+                        self.history = self.history[:l]
+                f = open(self.file_history, 'w')
+                for h in self.history:
+                        f.write('%d:%s\n'%h)
+                f.close()
+
+        def _find(self, string, term, first = True):
+                # TODO: 2.4.2 underlines support
+                if len(term) == 0:
+                        return True
+                if len(term) == 1:
+                        f = string.find(term)
+                        if string.find(term) != -1 and string[:f].find(' ') == -1 and string[:f].find('/') == -1:
+                                return True
+                else:
+                        p = 0
+                        for i in range(string.count(term[0:1])):
+                                f = string[p:].find(term[0:1]) + 1
+                                if not first and (string[p:p + f].find(' ') != -1 or string[p:p + f].find('/') != -1):
+                                        return False
+                                p += f
+                                if self._find(string[p:], term[1:], False):
+                                        return True
+                        return False
+
+        def load(self):
+                self._load_applist()
+                self._load_history()
+                self._find_running()
+                register(self._exit)
+
+        def append(self, apps):
+                # TODO: 2.8 i18n
+                c = {'audiovideo': 'Multimedia', 'sound': 'Multimedia', 'tv and radio': 'Multimedia',
+                     'viewers': 'Multimedia', 'video': 'Multimedia',
+                     'development': 'Programming', 'programming': 'Programming',
+                     'education': 'Education', 'science': 'Education',
+                     'game': 'Games', 'games': 'Games',
+                     'graphics': 'Graphics',
+                     'network': 'Network', 'web development': 'Network', 'amature radio': 'Network',
+                     'office': 'Office', 'data management': 'Office', 'editors': 'Office',
+                     'project management': 'Office', 'text': 'Office',
+                     'settings': 'Settings',
+                     'system': 'System', 'shells': 'System', 'terminal emulators': 'System',
+                     'utility': 'Utility', 'accessibility': 'Utility', 'emulators': 'Utility',
+                     'file management': 'Utility', 'mobile devices': 'Utility', 'help': 'Utility'}
+                for a in apps:
+                        t = []
+                        for i in a[2].split('/'):
+                                if c.has_key(i.lower()):
+                                        try:
+                                                t.index(c[i.lower()])
+                                        except:
+                                                t.append(c[i.lower()])
+                        self.apps[a[0]] = [a[1], t, a[3], a[4], a[5], False, 0, 0.0]
+
+        def dump(self):
+                f = open(join(HOME, 'dump'), 'w')
+                for i in self.apps:
+                        a = self.apps[i]
+                        f.write('Name : %s\n'%i)
+                        f.write('Description : %s\n'%a[AP_DESC])
+                        f.write('Tags : %s\n'%a[AP_TAGS])
+                        f.write('Icon : %s\n'%a[AP_ICON])
+                        f.write('Command : %s\n'%a[AP_CMD])
+                        f.write('Calls : %f\n'%a[AP_CALLS])
+                        f.write('\n')
+                f.close()
+
+        def run(self, app):
+                self.history.append((int(gettime()), app))
+                if self.apps[app][AP_TEXT]:
+                        spawnlp(P_NOWAIT, 'xterm', 'xterm', '-e', self.apps[app][AP_CMD])
+                else:
+                        spawnlp(P_NOWAIT, '/bin/sh', '/bin/sh', '-c', self.apps[app][AP_CMD])
+
+        def tags(self):
+                l = []
+                for a in self.apps:
+                        for t in self.apps[a][AP_TAGS]:
+                                try:
+                                        l.index(t)
+                                except:
+                                        l.append(t)
+                l.sort(lambda x, y: cmp(x, y))
+                return l
+
+        def select(self, filter, section):
+                t = int(gettime()) - 7*86400
+                if len(self.history) > 5 and self.history[5][0] > t:
+                        t = self.history[5][0]
+                n, r, o = [], [], []
+                s = filter.lower()
+                for i in self.apps:
+                        a = self.apps[i]
+                        if self._find(i.lower(), s) or self._find(a[AP_DESC].lower(), s):
+                                if a[AP_ADDED] > t and a[AP_CALLS] == 0:
+                                        n.append([i, a[AP_DESC], a[AP_ICON], a[AP_RUN], a[AP_ADDED]])
+                                elif a[AP_CALLS] > 0:
+                                        r.append([i, a[AP_DESC], a[AP_ICON], a[AP_RUN], a[AP_CALLS]])
+                                if section != False:
+                                        try:
+                                                a[AP_TAGS].index(section)
+                                                o.append([i, a[AP_DESC], a[AP_ICON], a[AP_RUN]])
+                                        except:
+                                                if section == True:
+                                                        o.append([i, a[AP_DESC], a[AP_ICON], a[AP_RUN]])
+                n.sort(lambda x, y: cmp(y[4], x[4]))
+                # TODO: 2.7 spatial memory-friendly sorting algorithm
+                r.sort(lambda x, y: cmp(y[4], x[4]))
+                o.sort(lambda x, y: cmp(x[0], y[0]))
+                return n, r, o
+
+
+##------
+## Main
+##------
+def help():
+        print '''The Launcher, version 2.4.1
+Copyright 2007-2008 Alexander Barinov
+
+Supported command line options:
+    --debug      : Dump application database to '~/.thelauncher/dump'.
+    --columns=n  : The number of columns to show.
+    --iconsize=n : Size of application icons.
+    --mode=s     : Window mode. Can be one of:
+                   fullscreen - fullscreen window;
+                   hidden - normal window hidden from taskbar and pager;
+                   menu - menu-like window;
+                   standard - normal window, this is the default.
+    --help       : Show this information.
+'''
+
+if __name__ == '__main__':
+        from os.path import expanduser, join
+        from sys import argv
+
+        HOME = expanduser('~/.thelauncher')
+        CFG = ConfigFile(join(HOME, 'config'), argv)
+        if CFG.key('CmdLine', 'help', 0) == 1:
+                help()
+        APPS = AppList()
+        ICONS = IconProvider()
+        for m in [MLDebian('/usr/share/menu'),
+                  MLFdo('/opt/kde3/share/applications'),
+                  MLFdo('/opt/gnome/share/applications'),
+                  MLFdo('/usr/share/applications'),
+                  MLFdo(expanduser('~/.local/share/applications')),
+                  MLFdo(join(HOME, 'apps'))]:
+                APPS.append(m.load())
+        # TODO: 2.4.2 what if 0 apps?
+        APPS.load()
+        if CFG.key('CmdLine', 'debug', 0) == 1:
+                APPS.dump()
+        UI = GtkUI()
+        ##from time import clock
+        ##print clock()
+        UI.update_icons()
+        UI.run()

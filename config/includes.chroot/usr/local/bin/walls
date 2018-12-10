@@ -1,0 +1,16 @@
+#!/bin/sh
+# wallpaper avec feh
+# usage : $ walls /path_to_image
+
+if [ -z "$1" ]; then
+    IMAGE=$(zenity --file-selection --filename "/usr/share/backgrounds/" --title "set your wallpaper")
+    if [ -z "$IMAGE" ]; then
+        zenity --info --text "no file - exit" --timeout 3
+        exit 0
+    fi
+else
+    IMAGE="$@"
+fi
+
+exec feh --quiet --bg-fill $IMAGE &
+exit 0

@@ -1,0 +1,11 @@
+#!/bin/bash
+# simple command-line to clear trash folder
+SPACE=`du -kh --max-depth=0 ~/.local/share/Trash | awk '{print $1}'`
+ACTION=`zenity --question --title "clear trash" --text " clear trash ?\n $SPACE to delete."; ans=$? ; echo "$ans"`
+if [ "${ACTION}" == "0" ]; then
+    rm -Rf ~/.local/share/Trash/*
+    zenity --info --text "trash cleared" --timeout 3
+else
+    zenity --info --text "cancelled"
+fi
+exit 0
